@@ -1,5 +1,6 @@
 using System;
 using MonoTouch.CoreLocation;
+using MonoTouch.Foundation;
 using MonoTouch.MapKit;
 using MonoTouch.UIKit;
 using System.Drawing;
@@ -19,14 +20,56 @@ namespace MapkitDirections
         {
             base.ViewDidLoad();
 
+            NavigationItem.Title = "MapKit Sample";
+
             //Init Map
             _map = new MKMapView
             {
                 MapType = MKMapType.Standard,
                 ShowsUserLocation = true,
                 ZoomEnabled = true,
-                ScrollEnabled = true
+                ScrollEnabled = true,
+                ShowsBuildings = true,
+                PitchEnabled = true,
+
             };
+
+            this.SetToolbarItems(new UIBarButtonItem[] {
+    new UIBarButtonItem(UIBarButtonSystemItem.Camera, (s,e) => {
+                                                                   
+      using (var snapShotOptions = new MKMapSnapshotOptions())
+      {
+          snapShotOptions.Region = _map.Region;
+          snapShotOptions.Scale = UIScreen.MainScreen.Scale;
+          snapShotOptions.Size = _map.Frame.Size;
+          
+          using (var snapShot = new MKMapSnapshotter(snapShotOptions))
+          {
+              snapShot.Start((snapshot, error) =>
+              {
+                  if (error == null)
+                  {
+                      snapshot.Image.SaveToPhotosAlbum(
+                          (uiimage, imgError) =>
+                              {
+                                  if (imgError == null)
+                                  {
+                                      new UIAlertView("Image Saved", "Map View Image Saved!", null, "OK", null).Show();
+                                  }
+
+                               });
+                   }
+               });
+           }
+       }
+    })
+}, false);
+
+            this.NavigationController.ToolbarHidden = false;
+
+
+
+
 
             //Create new MapDelegate Instance
             _mapDelegate = new MapDelegate();
@@ -46,7 +89,7 @@ namespace MapkitDirections
             //Start at Xamarin SF Office
             var orignPlaceMark = new MKPlacemark(new CLLocationCoordinate2D(37.797530, -122.402590), null);
             var sourceItem = new MKMapItem(orignPlaceMark);
-            
+
             //End at Xamarin Cambridge Office
             var destPlaceMark = new MKPlacemark(new CLLocationCoordinate2D(42.374172, -71.120639), null);
             var destItem = new MKMapItem(destPlaceMark);
@@ -66,7 +109,7 @@ namespace MapkitDirections
             {
                 if (error != null)
                 {
-                    Console.WriteLine(error.ToString());
+                    Console.WriteLine(error.LocalizedDescription);
                 }
                 else
                 {
